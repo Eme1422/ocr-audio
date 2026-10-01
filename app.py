@@ -8,7 +8,7 @@ import pytesseract
 from PIL import Image
 import streamlit as st
 from gtts import gTTS
-from googletrans import Translator
+from deep_translator import GoogleTranslator
 
 # ---------- Configuración de Página ----------
 st.set_page_config(
@@ -130,7 +130,7 @@ IDIOMAS = {
     "Alemán": "de",
     "Japonés": "ja",
     "Coreano": "ko",
-    "Mandarín": "zh-cn",
+    "Mandarín": "zh-CN",
     "Bengalí": "bn"
 }
 
@@ -163,11 +163,12 @@ def limpiar_archivos_antiguos(dias=7):
 limpiar_archivos_antiguos(7)
 
 def text_to_speech(src_lang, dest_lang, text_data, tld_code):
-    translator = Translator()
-    translation = translator.translate(text_data, src=src_lang, dest=dest_lang)
-    trans_text = translation.text
+    # Traducción mediante deep-translator (más estable en Streamlit Cloud)
+    trans_text = GoogleTranslator(source=src_lang, target=dest_lang).translate(text_data)
     
-    tts = gTTS(trans_text, lang=dest_lang, tld=tld_code, slow=False)
+    # gTTS utiliza códigos de idioma en minúsculas (ej. "zh-cn")
+    gtts_lang = dest_lang.lower()
+    tts = gTTS(trans_text, lang=gtts_lang, tld=tld_code, slow=False)
     
     safe_prefix = re.sub(r'[^a-zA-Z0-9]', '', text_data[:15]).strip()
     if not safe_prefix:
@@ -185,7 +186,6 @@ st.markdown('<p class="hero-subtitle">Captura texto desde tu cámara o sube un a
 
 # ---------- Barra Lateral (Configuración) ----------
 with st.sidebar:
-    # Carga de la imagen personalizada traductor2.png
     if os.path.exists("traductor2.png"):
         st.image("traductor2.png", width=140)
     else:
@@ -251,7 +251,7 @@ if img_rgb is not None:
         try:
             with st.spinner("Extrayendo texto de la imagen..."):
                 ocr_lang_code = IDIOMAS[in_lang_name]
-                tess_lang = "chi_sim" if ocr_lang_code == "zh-cn" else ocr_lang_code
+                tess_lang = "chi_sim" if ocr_lang_code == "zh-CN" else ocr_lang_code
                 
                 texto_extraido = pytesseract.image_to_string(img_rgb, lang=tess_lang)
 
@@ -291,10 +291,3 @@ if img_rgb is not None:
 
 else:
     st.info("👋 **¡Bienvenido!** Selecciona una imagen desde tu equipo o activa la cámara en el menú lateral para comenzar.")
-
-
-
-
- 
-    
-    
